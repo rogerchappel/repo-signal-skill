@@ -1,0 +1,30 @@
+{
+  "name": "repo-signal-skill",
+  "version": "0.1.0",
+  "description": "Local repository signal maps for agent launch, review, and maintenance workflows.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "repo-signal-skill": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "SKILL.md",
+    "docs",
+    "fixtures",
+    "README.md"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test test/*.test.js",
+    "smoke": "npm run build && node dist/cli.js scan fixtures/node-package --format markdown",
+    "package:smoke": "npm pack --dry-run"
+  }
+}
