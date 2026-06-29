@@ -1,0 +1,9 @@
+{
+  "name": "cli-only",
+  "bin": {
+    "cli-only": "dist/cli.js"
+  },
+  "scripts": {
+    "smoke": "node dist/cli.js --help"
+  }
+}
