@@ -30,3 +30,18 @@ All scans are local. The tool does not call LLMs, publish content, upload files,
 ## Limitations
 
 V1 uses deterministic file and line matching. It favors concise evidence over deep semantic analysis and does not parse every language ecosystem.
+
+## Verification
+
+```bash
+npm run check
+npm test
+npm run smoke
+npm run package:smoke
+npm run release:check
+```
+
+`release:check` runs TypeScript validation, fixture-backed tests, the maintained
+CLI smoke scan, and package contents verification. `package:smoke` builds the
+CLI, verifies the published bin target, support docs, skill file, fixtures, and
+package allowlist, then runs `npm pack --dry-run`.
