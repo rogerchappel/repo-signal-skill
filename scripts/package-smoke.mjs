@@ -1,7 +1,8 @@
+#!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
 
 const required = [
   'package/dist/cli.js',
@@ -12,6 +13,7 @@ const required = [
   'package/SECURITY.md',
   'package/CHANGELOG.md',
   'package/CONTRIBUTING.md',
+  'package/fixtures/node-package/package.json',
   'package/fixtures/node-package/README.md',
   'package/docs/VERIFICATION.md'
 ];

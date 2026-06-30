@@ -2,5 +2,8 @@
 
 ## 0.1.0
 
-- Initial release-candidate surface for the local repository signal map CLI and library.
-- Includes fixture-backed tests, CLI smoke coverage, and npm package contents checks.
+- Initial release candidate for the local repository signal-map CLI and skill.
+- Includes fixture-backed scan and brief commands for README, package metadata,
+  docs, tests, and source-file evidence.
+- Adds release-readiness checks for type checking, tests, fixture smoke, and
+  dry-run package contents review.

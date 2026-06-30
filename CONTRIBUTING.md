@@ -2,10 +2,27 @@
 
 Thanks for helping improve `repo-signal-skill`.
 
-Before opening a pull request:
+## Local Setup
 
-1. Keep fixtures deterministic and free of private repository content.
-2. Add or update tests for signal scoring and output changes.
-3. Run `npm run release:check`.
+```sh
+npm install
+npm run build
+```
 
-Release-candidate changes should keep the CLI local-first and evidence-backed.
+## Before Opening a PR
+
+Run the broad release-readiness gate:
+
+```sh
+npm run release:check
+```
+
+For smaller iterations, use:
+
+- `npm run check` for TypeScript validation.
+- `npm test` for fixture-backed tests.
+- `npm run smoke` for the maintained CLI fixture scan.
+- `npm run package:smoke` for package contents review.
+
+Keep fixtures small and local. Do not add private repository content, secrets,
+tokens, proprietary docs, or sensitive logs to examples or test cases.
