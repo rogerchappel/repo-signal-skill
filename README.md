@@ -23,6 +23,16 @@ import { scanRepo, signalMapToMarkdown } from 'repo-signal-skill';
 console.log(signalMapToMarkdown(scanRepo('.')));
 ```
 
+## Verification
+
+Run the release gate before publishing or opening a release PR:
+
+```bash
+npm run release:check
+```
+
+The gate type-checks the TypeScript sources, runs fixture-backed tests, exercises the CLI smoke path, and verifies the npm tarball includes the CLI, library output, skill file, fixtures, docs, license, changelog, and security policy.
+
 ## Safety Notes
 
 All scans are local. The tool does not call LLMs, publish content, upload files, or infer claims without file-backed evidence. Review output before using it in launch posts, release notes, or review reports.
