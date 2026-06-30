@@ -1,54 +1,44 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+const required = [
+  'package/dist/cli.js',
+  'package/dist/index.js',
+  'package/SKILL.md',
+  'package/README.md',
+  'package/LICENSE',
+  'package/SECURITY.md',
+  'package/CHANGELOG.md',
+  'package/CONTRIBUTING.md',
+  'package/fixtures/node-package/package.json',
+  'package/fixtures/node-package/README.md',
+  'package/docs/VERIFICATION.md'
+];
 
-function requirePath(relativePath, label = relativePath) {
-  if (!existsSync(join(root, relativePath))) {
-    throw new Error(`${label} is missing from the package surface: ${relativePath}`);
+const dir = mkdtempSync(join(tmpdir(), 'repo-signal-pack-'));
+
+try {
+  const tarball = execFileSync('npm', ['pack', '--silent'], { encoding: 'utf8' }).trim();
+  execFileSync('tar', ['-xzf', tarball, '-C', dir]);
+  const contents = execFileSync('find', [join(dir, 'package'), '-type', 'f'], { encoding: 'utf8' });
+
+  for (const file of required) {
+    const path = join(dir, file);
+    if (!contents.includes(path)) {
+      throw new Error(`packed tarball missing ${file}`);
+    }
   }
-}
 
-for (const [name, target] of Object.entries(pkg.bin ?? {})) {
-  requirePath(target, `bin target ${name}`);
-}
+  execFileSync('node', [join(dir, 'package/dist/cli.js'), 'scan', 'fixtures/node-package', '--format', 'json'], {
+    cwd: process.cwd(),
+    stdio: 'pipe'
+  });
 
-for (const required of [
-  'dist/index.js',
-  'SKILL.md',
-  'docs/VERIFICATION.md',
-  'fixtures/node-package/package.json',
-  'README.md',
-  'LICENSE',
-  'SECURITY.md',
-  'CHANGELOG.md',
-  'CONTRIBUTING.md',
-]) {
-  requirePath(required);
+  console.log(`package smoke passed for ${tarball}`);
+  rmSync(tarball, { force: true });
+} finally {
+  rmSync(dir, { recursive: true, force: true });
 }
-
-const files = new Set(pkg.files ?? []);
-for (const required of [
-  'dist',
-  'SKILL.md',
-  'docs',
-  'fixtures',
-  'README.md',
-  'LICENSE',
-  'SECURITY.md',
-  'CHANGELOG.md',
-  'CONTRIBUTING.md',
-]) {
-  if (!files.has(required)) {
-    throw new Error(`package.json files is missing ${required}`);
-  }
-}
-
-execFileSync('npm', ['pack', '--dry-run'], {
-  cwd: root,
-  stdio: 'inherit',
-});
