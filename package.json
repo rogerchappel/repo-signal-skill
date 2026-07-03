@@ -40,9 +40,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
+    "lint": "npm run check",
     "test": "npm run build && node --test test/*.test.js",
     "smoke": "npm run build && node dist/cli.js scan fixtures/node-package --format markdown",
     "package:smoke": "npm run build && node scripts/package-smoke.mjs",
-    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke"
+    "release:check": "npm run lint && npm test && npm run smoke && npm run package:smoke"
   }
 }
