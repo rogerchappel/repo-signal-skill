@@ -1,11 +1,11 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
+import { isAbsolute, join, relative } from 'node:path';
 export type Evidence = { file: string; line?: number; text: string };
 export type RepoSignalMap = { name: string; audience: string[]; proofPoints: Evidence[]; riskAreas: Evidence[]; demoCommands: Evidence[]; followUpQuestions: string[]; filesScanned: string[] };
 const wanted = ['README.md','package.json','CHANGELOG.md','docs','test','tests','src'];
 export function scanRepo(repo: string): RepoSignalMap {
   const files = collectFiles(repo);
-  const texts = files.map(file => ({ file, body: safeRead(join(repo,file)) }));
+  const texts = files.map(file => ({ file, body: safeRead(repo, file) }));
   const pkg = texts.find(t => t.file === 'package.json');
   let name = repo.split('/').filter(Boolean).pop() ?? 'repository';
   if (pkg) { try { name = JSON.parse(pkg.body).name ?? name; } catch {} }
@@ -14,9 +14,9 @@ export function scanRepo(repo: string): RepoSignalMap {
   const demoCommands = pickEvidence(texts, [/npm run/i,/node .*dist/i,/curl /i,/python /i,/smoke/i], 6);
   return { name, audience: inferAudience(texts), proofPoints, riskAreas, demoCommands, filesScanned: files, followUpQuestions: questions(proofPoints, riskAreas, demoCommands) };
 }
-function collectFiles(repo:string){ const out:string[]=[]; for (const item of wanted) { const full=join(repo,item); if(!existsSync(full)) continue; const st=statSync(full); if(st.isFile()) out.push(item); if(st.isDirectory()) walk(repo, full, out); } return out.filter(f => !f.includes('node_modules')).sort(); }
-function walk(root:string, dir:string, out:string[]){ for(const name of readdirSync(dir)){ const full=join(dir,name); const st=statSync(full); if(st.isDirectory() && out.length < 80) walk(root, full, out); if(st.isFile() && /\.(md|json|ts|js|txt|yml|yaml)$/.test(name)) out.push(relative(root,full)); } }
-function safeRead(file:string){ try { return readFileSync(file,'utf8').slice(0,20000); } catch { return ''; } }
+function collectFiles(repo:string){ const out:string[]=[]; for (const item of wanted) { const full=join(repo,item); if(!existsSync(full)) continue; const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isFile()) out.push(item); if(st.isDirectory()) walk(repo, full, out); } return out.filter(f => !f.includes('node_modules')).sort(); }
+function walk(root:string, dir:string, out:string[]){ for(const name of readdirSync(dir)){ const full=join(dir,name); const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isDirectory() && out.length < 80) walk(root, full, out); if(st.isFile() && /\.(md|json|ts|js|txt|yml|yaml)$/.test(name)) out.push(relative(root,full)); } }
+function safeRead(root:string, file:string){ try { const resolvedRoot=realpathSync(root); const resolvedFile=realpathSync(join(root,file)); const pathFromRoot=relative(resolvedRoot,resolvedFile); if(pathFromRoot === '..' || pathFromRoot.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(pathFromRoot)) return ''; return readFileSync(resolvedFile,'utf8').slice(0,20000); } catch { return ''; } }
 function pickEvidence(texts:{file:string;body:string}[], patterns:RegExp[], limit:number): Evidence[]{ const found:Evidence[]=[]; for(const t of texts){ const lines=t.body.split(/\r?\n/); lines.forEach((line,i)=>{ if(found.length<limit && patterns.some(p=>p.test(line))) found.push({file:t.file,line:i+1,text:line.trim().slice(0,180)}); }); } return found; }
 function inferAudience(texts:{file:string;body:string}[]){ const joined=texts.map(t=>t.body).join(' ').toLowerCase(); const aud=[]; if(joined.includes('cli')) aud.push('CLI users'); if(joined.includes('agent')||joined.includes('skill')) aud.push('agent builders'); if(joined.includes('api')||joined.includes('library')) aud.push('library integrators'); return aud.length ? aud : ['maintainers']; }
 function questions(proof:Evidence[], risks:Evidence[], demos:Evidence[]){ const q=[]; if(!proof.length) q.push('Which files prove the primary user value?'); if(!demos.length) q.push('Which command should a new user run first?'); if(!risks.length) q.push('What limitations or safety notes should launch material mention?'); q.push('Which claim needs one more file-backed citation before publishing?'); return q; }
