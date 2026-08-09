@@ -16,6 +16,10 @@ node dist/cli.js brief fixtures/docs-heavy --format json
 - `repo-signal-skill scan <repo> [--format markdown|json]` emits a full signal map.
 - `repo-signal-skill brief <repo> --format json` emits a compact handoff object.
 
+`scan` defaults to Markdown and `brief` defaults to JSON. Unsupported formats,
+unknown or duplicate options, and options without values exit with status 2 and
+print a concise error followed by CLI usage.
+
 ## Library
 
 ```js
