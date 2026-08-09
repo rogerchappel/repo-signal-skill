@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Reject missing and non-directory scan targets with clear CLI and library errors while preserving valid empty-directory scans.
+
 ## 0.1.0
 
 - Initial release candidate for the local repository signal-map CLI and skill.

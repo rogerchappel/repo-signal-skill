@@ -20,12 +20,19 @@ node dist/cli.js brief fixtures/docs-heavy --format json
 unknown or duplicate options, and options without values exit with status 2 and
 print a concise error followed by CLI usage.
 
+The `<repo>` target must exist and be a directory. Missing paths and file targets
+print a concise error and exit nonzero. Existing empty directories are valid and
+produce a signal map with no scanned files or evidence.
+
 ## Library
 
 ```js
 import { scanRepo, signalMapToMarkdown } from 'repo-signal-skill';
 console.log(signalMapToMarkdown(scanRepo('.')));
 ```
+
+`scanRepo` and `briefRepo` throw an `Error` when the target does not exist or is
+not a directory. Existing empty directories return an empty, valid signal map.
 
 ## Safety Notes
 
