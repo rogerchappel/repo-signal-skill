@@ -14,6 +14,26 @@ test('scans fixture repository with evidence', () => { const map = scanRepo('fix
 test('creates markdown signal map', () => { const md = signalMapToMarkdown(scanRepo('fixtures/docs-heavy')); assert.match(md, /Repo Signal Map/); assert.match(md, /Safety/); });
 test('brief returns compact fields', () => { const brief = briefRepo('fixtures/cli-only'); assert.equal(brief.name, 'cli-only'); assert.ok(brief.firstDemo); });
 
+test('library rejects nonexistent and non-directory repository paths', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'repo-signal-target-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const file = join(root, 'README.md');
+  writeFileSync(file, '# Not a repository');
+
+  assert.throws(() => scanRepo(join(root, 'missing')), /Repository path does not exist:/);
+  assert.throws(() => scanRepo(file), /Repository path is not a directory:/);
+});
+
+test('library preserves valid empty-directory scans', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'repo-signal-empty-test-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  const map = scanRepo(repo);
+
+  assert.equal(map.name, repo.split('/').pop());
+  assert.deepEqual(map.filesScanned, []);
+});
+
 test('CLI accepts documented scan formats', () => {
   const markdown = runCli('scan', 'fixtures/node-package', '--format', 'markdown');
   assert.equal(markdown.status, 0);
@@ -28,6 +48,23 @@ test('CLI accepts brief JSON output', () => {
   const result = runCli('brief', 'fixtures/cli-only', '--format', 'json');
   assert.equal(result.status, 0);
   assert.equal(JSON.parse(result.stdout).name, 'cli-only');
+});
+
+test('CLI rejects nonexistent and non-directory repository paths', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'repo-signal-cli-target-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const file = join(root, 'README.md');
+  writeFileSync(file, '# Not a repository');
+
+  for (const [target, error] of [
+    [join(root, 'missing'), /Repository path does not exist:/],
+    [file, /Repository path is not a directory:/],
+  ]) {
+    const result = runCli('scan', target, '--format', 'json');
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, error);
+  }
 });
 
 for (const [name, args, error] of [
