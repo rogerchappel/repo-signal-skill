@@ -4,6 +4,7 @@ export type Evidence = { file: string; line?: number; text: string };
 export type RepoSignalMap = { name: string; audience: string[]; proofPoints: Evidence[]; riskAreas: Evidence[]; demoCommands: Evidence[]; followUpQuestions: string[]; filesScanned: string[] };
 const wanted = ['README.md','package.json','CHANGELOG.md','docs','test','tests','src'];
 export function scanRepo(repo: string): RepoSignalMap {
+  validateRepo(repo);
   const files = collectFiles(repo);
   const texts = files.map(file => ({ file, body: safeRead(repo, file) }));
   const pkg = texts.find(t => t.file === 'package.json');
@@ -13,6 +14,10 @@ export function scanRepo(repo: string): RepoSignalMap {
   const riskAreas = pickEvidence(texts, [/limitation/i,/out of scope/i,/todo/i,/fixme/i,/risk/i,/safety/i], 8);
   const demoCommands = pickEvidence(texts, [/npm run/i,/node .*dist/i,/curl /i,/python /i,/smoke/i], 6);
   return { name, audience: inferAudience(texts), proofPoints, riskAreas, demoCommands, filesScanned: files, followUpQuestions: questions(proofPoints, riskAreas, demoCommands) };
+}
+function validateRepo(repo: string): void {
+  if (!existsSync(repo)) throw new Error(`Repository path does not exist: ${repo}`);
+  if (!lstatSync(repo).isDirectory()) throw new Error(`Repository path is not a directory: ${repo}`);
 }
 function collectFiles(repo:string){ const out:string[]=[]; for (const item of wanted) { const full=join(repo,item); if(!existsSync(full)) continue; const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isFile()) out.push(item); if(st.isDirectory()) walk(repo, full, out); } return out.filter(f => !f.includes('node_modules')).sort(); }
 function walk(root:string, dir:string, out:string[]){ for(const name of readdirSync(dir)){ const full=join(dir,name); const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isDirectory() && out.length < 80) walk(root, full, out); if(st.isFile() && /\.(md|json|ts|js|txt|yml|yaml)$/.test(name)) out.push(relative(root,full)); } }
