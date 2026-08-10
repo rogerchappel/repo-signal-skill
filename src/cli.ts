@@ -26,10 +26,15 @@ for (let index = 0; index < args.length; index += 1) {
 const allowedFormats = cmd === 'brief' ? ['json'] : ['markdown', 'json'];
 if (!allowedFormats.includes(format)) failUsage(`invalid format for ${cmd}: ${format}`);
 
-if (cmd === 'brief') {
-  const result = briefRepo(repo);
-  console.log(JSON.stringify(result,null,2));
-} else {
-  const result = scanRepo(repo);
-  console.log(format === 'json' ? JSON.stringify(result,null,2) : signalMapToMarkdown(result));
+try {
+  if (cmd === 'brief') {
+    const result = briefRepo(repo);
+    console.log(JSON.stringify(result,null,2));
+  } else {
+    const result = scanRepo(repo);
+    console.log(format === 'json' ? JSON.stringify(result,null,2) : signalMapToMarkdown(result));
+  }
+} catch (error) {
+  console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
 }
