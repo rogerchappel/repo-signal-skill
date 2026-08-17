@@ -34,6 +34,44 @@ test('library preserves valid empty-directory scans', (t) => {
   assert.deepEqual(map.filesScanned, []);
 });
 
+test('scan budget is deterministic and preserves source and test evidence', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'repo-signal-budget-test-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  mkdirSync(join(repo, 'docs', 'nested'), { recursive: true });
+  mkdirSync(join(repo, 'src'));
+  mkdirSync(join(repo, 'test'));
+
+  for (let index = 0; index < 100; index += 1) {
+    const directory = index % 2 === 0 ? join(repo, 'docs') : join(repo, 'docs', 'nested');
+    writeFileSync(join(directory, `guide-${String(index).padStart(3, '0')}.md`), `guide ${index}`);
+  }
+  writeFileSync(join(repo, 'src', 'feature.ts'), 'export const feature = true;');
+  writeFileSync(join(repo, 'test', 'feature.test.js'), 'test("feature", () => {});');
+
+  const first = scanRepo(repo).filesScanned;
+  const second = scanRepo(repo).filesScanned;
+
+  assert.equal(first.length, 80);
+  assert.deepEqual(first, second);
+  assert.ok(first.includes('src/feature.ts'));
+  assert.ok(first.includes('test/feature.test.js'));
+});
+
+test('scan budget caps flat and nested trees at the same limit', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'repo-signal-bound-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  for (const shape of ['flat', 'nested']) {
+    const repo = join(root, shape);
+    const docs = shape === 'flat' ? join(repo, 'docs') : join(repo, 'docs', 'a', 'b');
+    mkdirSync(docs, { recursive: true });
+    for (let index = 0; index < 100; index += 1) {
+      writeFileSync(join(docs, `file-${String(index).padStart(3, '0')}.md`), `file ${index}`);
+    }
+    assert.equal(scanRepo(repo).filesScanned.length, 80);
+  }
+});
+
 test('CLI accepts documented scan formats', () => {
   const markdown = runCli('scan', 'fixtures/node-package', '--format', 'markdown');
   assert.equal(markdown.status, 0);

@@ -3,6 +3,7 @@ import { isAbsolute, join, relative } from 'node:path';
 export type Evidence = { file: string; line?: number; text: string };
 export type RepoSignalMap = { name: string; audience: string[]; proofPoints: Evidence[]; riskAreas: Evidence[]; demoCommands: Evidence[]; followUpQuestions: string[]; filesScanned: string[] };
 const wanted = ['README.md','package.json','CHANGELOG.md','docs','test','tests','src'];
+const fileLimit = 80;
 export function scanRepo(repo: string): RepoSignalMap {
   validateRepo(repo);
   const files = collectFiles(repo);
@@ -19,8 +20,38 @@ function validateRepo(repo: string): void {
   if (!existsSync(repo)) throw new Error(`Repository path does not exist: ${repo}`);
   if (!lstatSync(repo).isDirectory()) throw new Error(`Repository path is not a directory: ${repo}`);
 }
-function collectFiles(repo:string){ const out:string[]=[]; for (const item of wanted) { const full=join(repo,item); if(!existsSync(full)) continue; const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isFile()) out.push(item); if(st.isDirectory()) walk(repo, full, out); } return out.filter(f => !f.includes('node_modules')).sort(); }
-function walk(root:string, dir:string, out:string[]){ for(const name of readdirSync(dir)){ const full=join(dir,name); const st=lstatSync(full); if(st.isSymbolicLink()) continue; if(st.isDirectory() && out.length < 80) walk(root, full, out); if(st.isFile() && /\.(md|json|ts|js|txt|yml|yaml)$/.test(name)) out.push(relative(root,full)); } }
+function collectFiles(repo:string){
+  const groups:string[][]=[];
+  for (const item of wanted) {
+    const full=join(repo,item);
+    if(!existsSync(full)) continue;
+    const st=lstatSync(full);
+    if(st.isSymbolicLink()) continue;
+    if(st.isFile()) groups.push([item]);
+    if(st.isDirectory()) groups.push(walk(repo,full));
+  }
+  const out:string[]=[];
+  for(let index=0; out.length<fileLimit; index+=1){
+    let added=false;
+    for(const group of groups){
+      if(group[index] !== undefined && out.length<fileLimit){ out.push(group[index]); added=true; }
+    }
+    if(!added) break;
+  }
+  return out.sort();
+}
+function walk(root:string, dir:string):string[]{
+  const out:string[]=[];
+  for(const name of readdirSync(dir).sort()){
+    if(name === 'node_modules') continue;
+    const full=join(dir,name);
+    const st=lstatSync(full);
+    if(st.isSymbolicLink()) continue;
+    if(st.isDirectory()) out.push(...walk(root,full));
+    if(st.isFile() && /\.(md|json|ts|js|txt|yml|yaml)$/.test(name)) out.push(relative(root,full));
+  }
+  return out;
+}
 function safeRead(root:string, file:string){ try { const resolvedRoot=realpathSync(root); const resolvedFile=realpathSync(join(root,file)); const pathFromRoot=relative(resolvedRoot,resolvedFile); if(pathFromRoot === '..' || pathFromRoot.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(pathFromRoot)) return ''; return readFileSync(resolvedFile,'utf8').slice(0,20000); } catch { return ''; } }
 function pickEvidence(texts:{file:string;body:string}[], patterns:RegExp[], limit:number): Evidence[]{ const found:Evidence[]=[]; for(const t of texts){ const lines=t.body.split(/\r?\n/); lines.forEach((line,i)=>{ if(found.length<limit && patterns.some(p=>p.test(line))) found.push({file:t.file,line:i+1,text:line.trim().slice(0,180)}); }); } return found; }
 function inferAudience(texts:{file:string;body:string}[]){ const joined=texts.map(t=>t.body).join(' ').toLowerCase(); const aud=[]; if(joined.includes('cli')) aud.push('CLI users'); if(joined.includes('agent')||joined.includes('skill')) aud.push('agent builders'); if(joined.includes('api')||joined.includes('library')) aud.push('library integrators'); return aud.length ? aud : ['maintainers']; }
