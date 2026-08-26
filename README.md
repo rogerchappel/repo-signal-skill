@@ -56,7 +56,8 @@ npm run release:check
 `release:check` runs TypeScript validation, fixture-backed tests, the maintained
 CLI smoke scan, and package contents verification. `package:smoke` builds the
 CLI, verifies the published bin target, support docs, skill file, fixtures, and
-package allowlist, then runs `npm pack --dry-run`.
+package allowlist, then packs with `npm pack --silent`, extracts the tarball,
+verifies the required files, and executes the CLI from the packed tarball.
 
 The `lint` script is the contributor-facing alias for TypeScript validation so
 CI, local release checks, and package reviewers all use the same static gate.
