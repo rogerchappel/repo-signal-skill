@@ -72,6 +72,37 @@ test('scan budget caps flat and nested trees at the same limit', (t) => {
   }
 });
 
+test('TODO/FIXME/limitation lines stay in risk areas and are not proof points', () => {
+  const map = scanRepo('fixtures/sparse-repo');
+
+  assert.equal(map.proofPoints.length, 0);
+  assert.ok(map.riskAreas.some((item) => /TODO: document usage\./.test(item.text)));
+});
+
+test('CLI scan reports sparse fixture TODO only as a risk', () => {
+  const result = runCli('scan', 'fixtures/sparse-repo', '--format', 'json');
+
+  assert.equal(result.status, 0);
+  const map = JSON.parse(result.stdout);
+  assert.equal(map.proofPoints.length, 0);
+  assert.ok(map.riskAreas.some((item) => /TODO: document usage\./.test(item.text)));
+});
+
+test('self-scan demo commands are executable command lines, not changelog prose', () => {
+  const map = scanRepo('.');
+
+  assert.equal(map.demoCommands.some((item) => item.file === 'CHANGELOG.md'), false);
+  for (const demo of map.demoCommands) {
+    assert.ok(
+      /^\s*(npm|npx|node|pnpm|yarn|bun|curl|wget|python3?|git|sh|bash|zsh|deno|ruby|go|make|docker|gh|brew|pip3?|cargo)\b/.test(demo.text) ||
+        /dist\/cli\.js/.test(demo.text) ||
+        /npm run/.test(demo.text) ||
+        /^\s*[$>]/.test(demo.text),
+      `demo command is not command-shaped: ${demo.file}:${demo.line} ${demo.text}`,
+    );
+  }
+});
+
 test('CLI accepts documented scan formats', () => {
   const markdown = runCli('scan', 'fixtures/node-package', '--format', 'markdown');
   assert.equal(markdown.status, 0);
