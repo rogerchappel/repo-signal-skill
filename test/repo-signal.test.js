@@ -103,6 +103,25 @@ test('self-scan demo commands are executable command lines, not changelog prose'
   }
 });
 
+test('demo commands exclude prose mentions and keep copy-pasteable commands', () => {
+  const map = scanRepo('fixtures/node-package');
+
+  assert.deepEqual(map.demoCommands.map((item) => item.text), [
+    'npm run smoke',
+    '$ node dist/cli.js scan . --format markdown',
+  ]);
+});
+
+test('CLI demo commands contain only executable command text', () => {
+  const result = runCli('scan', 'fixtures/node-package', '--format', 'json');
+
+  assert.equal(result.status, 0);
+  assert.deepEqual(JSON.parse(result.stdout).demoCommands.map((item) => item.text), [
+    'npm run smoke',
+    '$ node dist/cli.js scan . --format markdown',
+  ]);
+});
+
 test('CLI accepts documented scan formats', () => {
   const markdown = runCli('scan', 'fixtures/node-package', '--format', 'markdown');
   assert.equal(markdown.status, 0);
