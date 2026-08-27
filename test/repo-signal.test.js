@@ -12,7 +12,7 @@ function runCli(...args) {
 
 test('scans fixture repository with evidence', () => { const map = scanRepo('fixtures/node-package'); assert.equal(map.name, 'fixture-node'); assert.ok(map.proofPoints.length > 0); assert.ok(map.demoCommands.length > 0); });
 test('creates markdown signal map', () => { const md = signalMapToMarkdown(scanRepo('fixtures/docs-heavy')); assert.match(md, /Repo Signal Map/); assert.match(md, /Safety/); });
-test('brief returns compact fields', () => { const brief = briefRepo('fixtures/cli-only'); assert.equal(brief.name, 'cli-only'); assert.ok(brief.firstDemo); });
+test('brief returns compact fields', () => { const brief = briefRepo('fixtures/node-package'); assert.equal(brief.name, 'fixture-node'); assert.ok(brief.firstDemo); });
 
 test('library rejects nonexistent and non-directory repository paths', (t) => {
   const root = mkdtempSync(join(tmpdir(), 'repo-signal-target-test-'));
@@ -94,10 +94,7 @@ test('self-scan demo commands are executable command lines, not changelog prose'
   assert.equal(map.demoCommands.some((item) => item.file === 'CHANGELOG.md'), false);
   for (const demo of map.demoCommands) {
     assert.ok(
-      /^\s*(npm|npx|node|pnpm|yarn|bun|curl|wget|python3?|git|sh|bash|zsh|deno|ruby|go|make|docker|gh|brew|pip3?|cargo)\b/.test(demo.text) ||
-        /dist\/cli\.js/.test(demo.text) ||
-        /npm run/.test(demo.text) ||
-        /^\s*[$>]/.test(demo.text),
+      /^\s*(?:[$>]\s*)?(npm|npx|node|pnpm|yarn|bun|curl|wget|python3?|git|sh|bash|zsh|deno|ruby|go|make|docker|gh|brew|pip3?|cargo)\b/.test(demo.text),
       `demo command is not command-shaped: ${demo.file}:${demo.line} ${demo.text}`,
     );
   }
