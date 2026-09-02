@@ -5,7 +5,7 @@ Use this skill when an agent needs a compact, evidence-backed map of a local rep
 ## Inputs
 
 - Path to a local repository or fixture directory.
-- README, package metadata, docs, changelog, tests, and common source/config files.
+- README, package metadata, GitHub Actions workflows, docs, changelog, tests, and common source/config files.
 
 ## Side-Effect Boundary
 
