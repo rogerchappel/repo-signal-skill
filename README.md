@@ -5,7 +5,7 @@ Local repository signal maps for agent launch, review, and maintenance workflows
 ## Quickstart
 
 ```bash
-npm install
+npm ci
 npm run build
 node dist/cli.js scan fixtures/node-package --format markdown
 node dist/cli.js brief fixtures/docs-heavy --format json
@@ -53,8 +53,9 @@ npm run package:smoke
 npm run release:check
 ```
 
-`release:check` runs TypeScript validation, fixture-backed tests, the maintained
-CLI smoke scan, and package contents verification. `package:smoke` builds the
+`release:check` verifies the repository CI/setup contract, runs TypeScript
+validation and fixture-backed tests, then exercises the maintained CLI smoke
+scan and package contents verification. `package:smoke` builds the
 CLI, verifies the published bin target, support docs, skill file, fixtures, and
 package allowlist, then packs with `npm pack --silent`, extracts the tarball,
 verifies the required files, and executes the CLI from the packed tarball.

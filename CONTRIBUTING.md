@@ -5,7 +5,7 @@ Thanks for helping improve `repo-signal-skill`.
 ## Local Setup
 
 ```sh
-npm install
+npm ci
 npm run build
 ```
 
