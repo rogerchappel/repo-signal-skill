@@ -2,7 +2,7 @@ import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync } from '
 import { isAbsolute, join, relative } from 'node:path';
 export type Evidence = { file: string; line?: number; text: string };
 export type RepoSignalMap = { name: string; audience: string[]; proofPoints: Evidence[]; riskAreas: Evidence[]; demoCommands: Evidence[]; followUpQuestions: string[]; filesScanned: string[] };
-const wanted = ['README.md','package.json','CHANGELOG.md','docs','test','tests','src'];
+const wanted = ['README.md','package.json','CHANGELOG.md','.github/workflows','docs','test','tests','src'];
 const fileLimit = 80;
 const riskPatterns = [/limitation/i,/out of scope/i,/todo/i,/fixme/i,/risk/i,/safety/i];
 export function scanRepo(repo: string): RepoSignalMap {
