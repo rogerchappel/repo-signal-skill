@@ -13,7 +13,8 @@ test('CI exercises the minimum Node major with frozen installs and read-only con
 
   assert.ok(minimumMajor, 'package.json must declare a minimum Node major');
   assert.match(workflow, /^permissions:\s*\n\s+contents:\s*read\s*$/m);
-  assert.match(workflow, /node-version:\s*\[[^\]]*\b${minimumMajor}\b[^\]]*\]/);
+  assert.match(workflow, new RegExp(`node-version:\\s*\\[[^\\]]*\\b${minimumMajor}\\b[^\\]]*\\]`));
+  assert.match(workflow, /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/);
   assert.match(workflow, /^\s+- run:\s*npm ci\s*$/m);
   assert.match(workflow, /^\s+- run:\s*npm run release:check\s*$/m);
 });
