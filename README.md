@@ -1,6 +1,6 @@
 # repo-signal-skill
 
-Local repository signal maps for agent launch, review, and maintenance workflows. The CLI scans local README, package metadata, docs, tests, and source files, then emits evidence-backed audience, proof point, risk, demo command, and follow-up-question sections.
+Local repository signal maps for agent launch, review, and maintenance workflows. The CLI scans local README, package metadata, GitHub Actions workflows, docs, tests, and source files, then emits evidence-backed audience, proof point, risk, demo command, and follow-up-question sections.
 
 ## Quickstart
 
@@ -40,7 +40,7 @@ All scans are local. The tool does not call LLMs, publish content, upload files,
 
 ## Limitations
 
-V1 uses deterministic file and line matching. It favors concise evidence over deep semantic analysis and does not parse every language ecosystem.
+V1 uses deterministic file and line matching. It favors concise evidence over deep semantic analysis and does not parse every language ecosystem. Scans retain a deterministic 80-file budget shared fairly across top-level metadata, `.github/workflows`, docs, tests, and source trees; symlinked files and directories are not followed.
 
 ## Verification
 

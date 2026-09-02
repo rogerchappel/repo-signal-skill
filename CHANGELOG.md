@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Include `.github/workflows` configuration in the deterministic, symlink-safe 80-file scan budget so CI evidence can support repository signals.
 - Reject missing and non-directory scan targets with clear CLI and library errors while preserving valid empty-directory scans.
 - Keep TODO/FIXME/limitation lines in risk areas instead of also listing them as proof points.
 - Restrict demo commands to executable command lines so changelog prose is not reported as a command.
