@@ -11,6 +11,13 @@ function runCli(...args) {
 }
 
 test('scans fixture repository with evidence', () => { const map = scanRepo('fixtures/node-package'); assert.equal(map.name, 'fixture-node'); assert.ok(map.proofPoints.length > 0); assert.ok(map.demoCommands.length > 0); });
+
+test('scans GitHub workflow configuration as file-backed CI evidence', () => {
+  const map = scanRepo('fixtures/node-package');
+
+  assert.ok(map.filesScanned.includes('.github/workflows/ci.yml'));
+  assert.ok(map.proofPoints.some((item) => item.file === '.github/workflows/ci.yml' && item.text === 'test:'));
+});
 test('creates markdown signal map', () => { const md = signalMapToMarkdown(scanRepo('fixtures/docs-heavy')); assert.match(md, /Repo Signal Map/); assert.match(md, /Safety/); });
 test('brief returns compact fields', () => { const brief = briefRepo('fixtures/node-package'); assert.equal(brief.name, 'fixture-node'); assert.ok(brief.firstDemo); });
 
@@ -40,6 +47,7 @@ test('scan budget is deterministic and preserves source and test evidence', (t) 
   mkdirSync(join(repo, 'docs', 'nested'), { recursive: true });
   mkdirSync(join(repo, 'src'));
   mkdirSync(join(repo, 'test'));
+  mkdirSync(join(repo, '.github', 'workflows'), { recursive: true });
 
   for (let index = 0; index < 100; index += 1) {
     const directory = index % 2 === 0 ? join(repo, 'docs') : join(repo, 'docs', 'nested');
@@ -47,6 +55,7 @@ test('scan budget is deterministic and preserves source and test evidence', (t) 
   }
   writeFileSync(join(repo, 'src', 'feature.ts'), 'export const feature = true;');
   writeFileSync(join(repo, 'test', 'feature.test.js'), 'test("feature", () => {});');
+  writeFileSync(join(repo, '.github', 'workflows', 'ci.yml'), 'jobs:\n  test:\n    runs-on: ubuntu-latest\n');
 
   const first = scanRepo(repo).filesScanned;
   const second = scanRepo(repo).filesScanned;
@@ -55,6 +64,7 @@ test('scan budget is deterministic and preserves source and test evidence', (t) 
   assert.deepEqual(first, second);
   assert.ok(first.includes('src/feature.ts'));
   assert.ok(first.includes('test/feature.test.js'));
+  assert.ok(first.includes('.github/workflows/ci.yml'));
 });
 
 test('scan budget caps flat and nested trees at the same limit', (t) => {
@@ -198,4 +208,20 @@ test('does not scan external directories through symlinks', (t) => {
 
   assert.doesNotMatch(JSON.stringify(map), /PRIVATE_EXTERNAL_DIRECTORY/);
   assert.equal(map.filesScanned.some(file => file.startsWith('docs/')), false);
+});
+
+test('does not scan external workflow directories through symlinks', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'repo-signal-workflow-symlink-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const repo = join(root, 'repo');
+  const external = join(root, 'external-workflows');
+  mkdirSync(join(repo, '.github'), { recursive: true });
+  mkdirSync(external);
+  writeFileSync(join(external, 'ci.yml'), 'jobs:\n  test: PRIVATE_EXTERNAL_WORKFLOW\n');
+  symlinkSync(external, join(repo, '.github', 'workflows'));
+
+  const map = scanRepo(repo);
+
+  assert.doesNotMatch(JSON.stringify(map), /PRIVATE_EXTERNAL_WORKFLOW/);
+  assert.equal(map.filesScanned.some(file => file.startsWith('.github/workflows/')), false);
 });
