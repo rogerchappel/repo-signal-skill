@@ -4,6 +4,9 @@ Thanks for helping improve `repo-signal-skill`.
 
 ## Local Setup
 
+Use Node.js 22 or newer; Node.js 22 is the supported minimum and CI also tests
+the current Node.js 24 LTS line.
+
 ```sh
 npm ci
 npm run build

@@ -4,16 +4,20 @@ import test from 'node:test';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('CI exercises the minimum Node major with frozen installs and read-only contents', async () => {
+test('CI exercises supported Node release lines with frozen installs and read-only contents', async () => {
   const [workflow, packageJson] = await Promise.all([
     read('.github/workflows/ci.yml'),
     read('package.json').then(JSON.parse)
   ]);
-  const minimumMajor = packageJson.engines.node.match(/\d+/)?.[0];
+  const minimumMajor = Number(packageJson.engines.node.match(/\d+/)?.[0]);
+  const matrix = workflow.match(/node-version:\s*\[([^\]]+)\]/)?.[1]
+    .split(',')
+    .map((value) => Number(value.trim()));
 
-  assert.ok(minimumMajor, 'package.json must declare a minimum Node major');
+  assert.ok(Number.isInteger(minimumMajor), 'package.json must declare a minimum Node major');
+  assert.ok(minimumMajor >= 22, 'package.json must not support an end-of-life Node minimum');
+  assert.deepEqual(matrix, [minimumMajor, 24], 'CI must test the supported minimum and current LTS');
   assert.match(workflow, /^permissions:\s*\n\s+contents:\s*read\s*$/m);
-  assert.match(workflow, new RegExp(`node-version:\\s*\\[[^\\]]*\\b${minimumMajor}\\b[^\\]]*\\]`));
   assert.match(workflow, /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/);
   assert.match(workflow, /^\s+- run:\s*npm ci\s*$/m);
   assert.match(workflow, /^\s+- run:\s*npm run release:check\s*$/m);

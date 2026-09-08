@@ -4,6 +4,8 @@ Local repository signal maps for agent launch, review, and maintenance workflows
 
 ## Quickstart
 
+Node.js 22 or newer is required. CI verifies the package on Node.js 22 and 24.
+
 ```bash
 npm ci
 npm run build
