@@ -31,10 +31,10 @@
     "CONTRIBUTING.md"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "devDependencies": {
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.5.0",
     "typescript": "^5.5.4"
   },
   "scripts": {
