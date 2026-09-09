@@ -14,3 +14,7 @@ Smoke output confirmed Markdown signal map generation for fixtures/node-package 
 
 `release:check` is the broadest maintained gate. It runs type checking,
 fixture-backed tests, CLI smoke coverage, and package contents verification.
+The package smoke extracts the tarball, runs the packed CLI against the fixture
+inside that extracted package, and requires JSON evidence showing that both
+fixture files were scanned with proof points and demo commands. Temporary
+extraction data and the generated tarball are removed on success or failure.
