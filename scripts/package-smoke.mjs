@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const required = [
   'package/dist/cli.js',
@@ -18,27 +19,49 @@ const required = [
   'package/docs/VERIFICATION.md'
 ];
 
-const dir = mkdtempSync(join(tmpdir(), 'repo-signal-pack-'));
-
-try {
-  const tarball = execFileSync('npm', ['pack', '--silent'], { encoding: 'utf8' }).trim();
-  execFileSync('tar', ['-xzf', tarball, '-C', dir]);
-  const contents = execFileSync('find', [join(dir, 'package'), '-type', 'f'], { encoding: 'utf8' });
-
-  for (const file of required) {
-    const path = join(dir, file);
-    if (!contents.includes(path)) {
-      throw new Error(`packed tarball missing ${file}`);
-    }
+export function assertPackedFixtureScan(map) {
+  if (map.name !== 'fixture-node') throw new Error(`packed fixture scan returned unexpected repository name: ${map.name}`);
+  if (!Array.isArray(map.filesScanned) || !map.filesScanned.includes('package.json') || !map.filesScanned.includes('README.md')) {
+    throw new Error('packed fixture scan did not inspect its package.json and README.md');
   }
+  if (!Array.isArray(map.proofPoints) || map.proofPoints.length === 0) {
+    throw new Error('packed fixture scan returned no proof points');
+  }
+  if (!Array.isArray(map.demoCommands) || map.demoCommands.length === 0) {
+    throw new Error('packed fixture scan returned no demo commands');
+  }
+}
 
-  execFileSync('node', [join(dir, 'package/dist/cli.js'), 'scan', 'fixtures/node-package', '--format', 'json'], {
-    cwd: process.cwd(),
-    stdio: 'pipe'
-  });
+export function runPackageSmoke() {
+  const dir = mkdtempSync(join(tmpdir(), 'repo-signal-pack-'));
+  let tarball;
 
-  console.log(`package smoke passed for ${tarball}`);
-  rmSync(tarball, { force: true });
-} finally {
-  rmSync(dir, { recursive: true, force: true });
+  try {
+    tarball = execFileSync('npm', ['pack', '--silent'], { encoding: 'utf8' }).trim();
+    execFileSync('tar', ['-xzf', tarball, '-C', dir]);
+    const contents = execFileSync('find', [join(dir, 'package'), '-type', 'f'], { encoding: 'utf8' });
+
+    for (const file of required) {
+      const path = join(dir, file);
+      if (!contents.includes(path)) {
+        throw new Error(`packed tarball missing ${file}`);
+      }
+    }
+
+    const fixture = join(dir, 'package/fixtures/node-package');
+    const output = execFileSync('node', [join(dir, 'package/dist/cli.js'), 'scan', fixture, '--format', 'json'], {
+      cwd: dir,
+      encoding: 'utf8'
+    });
+    assertPackedFixtureScan(JSON.parse(output));
+
+    console.log(`package smoke passed for ${tarball}`);
+  } finally {
+    if (tarball) rmSync(tarball, { force: true });
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  runPackageSmoke();
 }
