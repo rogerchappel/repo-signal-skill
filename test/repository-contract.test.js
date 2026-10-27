@@ -17,3 +17,10 @@ test('release check does not run publishing or deployment commands', () => {
   assert.match(workflow, /npm run release:check/);
   assert.doesNotMatch(workflow, /npm publish|npm pack --json|deploy/i);
 });
+
+test('package lifecycle builds dist before npm creates the package tarball', () => {
+  assert.equal(packageJson.scripts.prepare, 'npm run build');
+  assert.equal(packageJson.scripts.build, 'tsc -p tsconfig.json');
+  assert.equal(packageJson.bin['repo-signal-skill'], 'dist/cli.js');
+  assert.equal(packageJson.exports['.'], './dist/index.js');
+});
