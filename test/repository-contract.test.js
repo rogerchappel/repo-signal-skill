@@ -24,3 +24,11 @@ test('package lifecycle builds dist before npm creates the package tarball', () 
   assert.equal(packageJson.bin['repo-signal-skill'], 'dist/cli.js');
   assert.equal(packageJson.exports['.'], './dist/index.js');
 });
+
+test('package smoke asserts declared entrypoints are present in the packed tarball', () => {
+  const smoke = readFileSync(new URL('../scripts/package-smoke.mjs', import.meta.url), 'utf8');
+  assert.match(smoke, /package\/dist\/cli\.js/);
+  assert.match(smoke, /package\/dist\/index\.js/);
+  assert.match(smoke, /\['pack', '--silent'\]/);
+  assert.match(smoke, /package smoke passed for installed tarball/);
+});
