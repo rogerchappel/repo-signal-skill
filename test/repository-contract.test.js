@@ -14,7 +14,16 @@ test('release check references a present contract test and release script', () =
 
 test('release check does not run publishing or deployment commands', () => {
   const workflow = readFileSync(new URL('../.github/workflows/ci.yml', import.meta.url), 'utf8');
-  assert.match(workflow, /npm run release:check/);
+  for (const [script, command] of Object.entries({
+    'contract:check': 'npm run contract:check',
+    lint: 'npm run lint',
+    test: 'npm test',
+    smoke: 'npm run smoke',
+    'package:smoke': 'npm run package:smoke',
+  })) {
+    assert.ok(workflow.includes(command), `workflow includes ${script}`);
+  }
+  assert.match(workflow, /node-version: \[22, 24\]/);
   assert.doesNotMatch(workflow, /npm publish|npm pack --json|deploy/i);
 });
 
