@@ -22,4 +22,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
-      - run: npm run release:check
+      - run: npm run contract:check
+        name: Contract checks
+      - run: npm run lint
+        name: Lint
+      - run: npm test
+        name: Test
+      - run: npm run smoke
+        name: Smoke
+      - run: npm run package:smoke
+        name: Package smoke
