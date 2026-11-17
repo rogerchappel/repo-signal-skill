@@ -24,7 +24,7 @@ test('release check does not run publishing or deployment commands', () => {
   })) {
     assert.ok(packageJson.scripts['release:check'].includes(command), `release gate includes ${script}`);
   }
-  assert.match(workflow, /node-version: \[22, 24\]/);
+  assert.match(workflow, /node-version: \[22, 24, 26\]/);
   assert.doesNotMatch(workflow, /npm publish|npm pack --json|deploy/i);
 });
 
