@@ -64,3 +64,5 @@ verifies the required files, and executes the CLI from the packed tarball.
 
 The `lint` script is the contributor-facing alias for TypeScript validation so
 CI, local release checks, and package reviewers all use the same static gate.
+For the supported packed-tarball consumer install path, including its lifecycle
+script behavior and `bin`/`exports` checks, see [Packed installation](docs/PACKED_INSTALL.md).
