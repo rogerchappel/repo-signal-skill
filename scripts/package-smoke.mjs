@@ -34,7 +34,7 @@ export function runPackageSmoke() {
 
     const install = mkdtempSync(join(dir, 'repo-signal-install-'));
     execFileSync('npm', ['init', '-y'], { cwd: install, stdio: 'ignore' });
-    execFileSync('npm', ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund', join(process.cwd(), tarball)], {
+    execFileSync('npm', ['install', '--offline', '--no-audit', '--no-fund', join(process.cwd(), tarball)], {
       cwd: install, stdio: 'ignore'
     });
     execFileSync('node', ['--input-type=module', '-e',
