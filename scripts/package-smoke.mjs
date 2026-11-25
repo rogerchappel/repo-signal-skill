@@ -28,6 +28,16 @@ export function runPackageSmoke() {
     tarball = execFileSync('npm', ['pack', '--silent'], { encoding: 'utf8' }).trim();
     execFileSync('tar', ['-xzf', tarball, '-C', dir]);
     const contents = execFileSync('find', [join(dir, 'package'), '-type', 'f'], { encoding: 'utf8' });
+    const manifest = JSON.parse(execFileSync('tar', ['-xOf', tarball, 'package/package.json'], { encoding: 'utf8' }));
+    const declaredTargets = [manifest.exports?.['.'], ...Object.values(manifest.bin ?? {})]
+      .filter((target) => typeof target === 'string')
+      .map((target) => `package/${target.replace(/^\.\//, '')}`);
+    if (declaredTargets.length === 0) throw new Error('package manifest declares no export or executable targets');
+    for (const file of declaredTargets) {
+      if (!contents.split(/\r?\n/).includes(join(dir, file))) {
+        throw new Error(`packed tarball missing declared package target ${file}`);
+      }
+    }
     for (const file of required) {
       if (!contents.includes(join(dir, file))) throw new Error(`packed tarball missing ${file}`);
     }
