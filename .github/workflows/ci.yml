@@ -15,12 +15,18 @@ jobs:
     strategy:
       matrix:
         node-version: [22, 24, 26]
+        npm-version: [10, 11]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - run: npm install --global npm@${{ matrix.npm-version }}
+        name: Select npm ${{ matrix.npm-version }}
+      - run: npm --version
+        name: Confirm npm version
       - run: npm ci
+        name: Install dependencies
       - run: npm run release:check
         name: Release gate
